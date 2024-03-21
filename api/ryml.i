@@ -11,6 +11,8 @@
 #define SWIG_FILE_WITH_INIT
 
 #include <c4/yml/yml.hpp>
+#include <c4/format.hpp>
+#include <c4/std/string.hpp>
 
 namespace c4 {
 namespace yml {
@@ -210,6 +212,44 @@ bool _same_mem(c4::csubstr l, c4::csubstr r)
 
 %}
 
+//-----------------------------------------------------------------------------
+
+%init %{
+    struct ErrorHandler
+    {
+        // this will be called on error
+        void on_error(const char* msg, size_t len, c4::yml::Location loc)
+        {
+            throw std::runtime_error(c4::formatrs<std::string>("{}:{}:{} ({}B): ERROR: {}",
+                loc.name, loc.line, loc.col, loc.offset, c4::csubstr(msg, len)));
+        }
+
+        // bridge
+        c4::yml::Callbacks callbacks()
+        {
+            return c4::yml::Callbacks(this, nullptr, nullptr, ErrorHandler::s_error);
+        }
+        static void s_error(const char* msg, size_t len, c4::yml::Location loc, void *this_)
+        {
+            return ((ErrorHandler*)this_)->on_error(msg, len, loc);
+        }
+    };
+
+    ErrorHandler errh;
+	c4::yml::set_callbacks(errh.callbacks());
+%}
+
+//-----------------------------------------------------------------------------
+
+%include "exception.i"
+
+%exception {
+  try {
+    $action
+  } catch (const std::exception& e) {
+    SWIG_exception(SWIG_RuntimeError, e.what());
+  }
+}
 
 //-----------------------------------------------------------------------------
 
@@ -655,6 +695,36 @@ public:
 
 };
 */
+
+
+struct Location
+{
+    //! number of bytes from the beginning of the source buffer
+    size_t offset;
+    //! line
+    size_t line;
+    //! column
+    size_t col;
+
+    c4::csubstr name;
+};
+
+struct Parser
+{
+    ~Parser();
+public:
+    void parse_in_arena(c4::csubstr filename, c4::csubstr csrc, Tree *t);
+    Location location(Tree const& tree, size_t node_id) const;
+};
+
+%extend Parser {
+    Parser() {
+        c4::yml::ParserOptions opts;
+        opts.locations(true);
+        c4::yml::Parser *p = new c4::yml::Parser(opts);
+        return p;
+    }
+};
 
 } // namespace yml
 } // namespace c4
