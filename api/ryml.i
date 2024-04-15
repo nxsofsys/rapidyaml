@@ -115,6 +115,17 @@ using csubstr = c4::csubstr;
 
 %inline %{
 
+size_t _u_length(c4::csubstr s)
+{
+    size_t len = 0;
+    const char *ss = s.str;
+    const char *end = s.str + s.len;
+    while (ss != end) {
+        len += (*ss++ & 0xc0) != 0x80;
+    }
+    return len;
+}
+
 void parse_csubstr(c4::csubstr s, c4::yml::Tree *t)
 {
     c4::yml::parse_in_arena(s, t);
@@ -267,6 +278,8 @@ def as_substr(s):
 def u(memview):
     return str(memview, "utf8")
 
+def u_length(memview):
+    return _u_length(memview)
 
 def children(tree, node=None):
     assert tree is not None
@@ -428,6 +441,14 @@ struct NodeType
     bool is_quoted() const;
 };
 
+struct NodeScalar
+{
+    NodeScalar();
+    ~NodeScalar();
+    c4::csubstr tag;
+    c4::csubstr scalar;
+    c4::csubstr anchor;
+};
 
 struct Tree
 {
@@ -713,16 +734,22 @@ struct Parser
 {
     ~Parser();
 public:
+    void parse_in_place(c4::csubstr filename, c4::substr src, Tree *t);
     void parse_in_arena(c4::csubstr filename, c4::csubstr csrc, Tree *t);
     Location location(Tree const& tree, size_t node_id) const;
 };
 
 %extend Parser {
-    Parser() {
+    Parser()
+    {
         c4::yml::ParserOptions opts;
         opts.locations(true);
         c4::yml::Parser *p = new c4::yml::Parser(opts);
         return p;
+    }
+    Location Parser::val_location(c4::csubstr csrc) const
+    {
+        return $self->val_location(csrc.str);
     }
 };
 
