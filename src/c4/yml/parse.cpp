@@ -2451,13 +2451,13 @@ bool Parser::_scan_scalar_map_blck(csubstr *C4_RESTRICT scalar, bool *C4_RESTRIC
             if(colon_token == npos)
             {
                 _RYML_CB_ASSERT(m_stack.m_callbacks, s.len > 0);
-                colon_token = s.find(':');
+                colon_token = s.last_of(':');
                 if(colon_token != s.len-1)
                     colon_token = npos;
             }
             ,
             // without tab tokens
-            colon_token = s.find(':');
+            colon_token = s.last_of(':');
             _RYML_CB_ASSERT(m_stack.m_callbacks, s.len > 0);
             if(colon_token != s.len-1)
                 colon_token = npos;
