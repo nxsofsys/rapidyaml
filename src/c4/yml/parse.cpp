@@ -4638,6 +4638,10 @@ csubstr Parser::_filter_plain_scalar(substr s, size_t indentation)
     #define _c4dbgfps(...)
     #endif
 
+    if (m_options.no_filter()) {
+        return s;
+    }
+
     _c4dbgfps("before=~~~{}~~~", s);
 
     substr r = s.triml(" \t");
@@ -4689,6 +4693,11 @@ csubstr Parser::_filter_squot_scalar(substr s)
     #else
     #define _c4dbgfsq(...)
     #endif
+
+    if (m_options.no_filter()) {
+        _c4dbgfsq(": skip=~~~{}~~~", s);
+        return s;
+    }
 
     // from the YAML spec for double-quoted scalars:
     // https://yaml.org/spec/1.2-old/spec.html#style/flow/single-quoted
@@ -4755,6 +4764,11 @@ csubstr Parser::_filter_dquot_scalar(substr s)
     #else
     #define _c4dbgfdq(...)
     #endif
+
+    if (m_options.no_filter()) {
+        _c4dbgfdq(": skip=~~~{}~~~", s);
+        return s;
+    }
 
     _c4dbgfdq(": before=~~~{}~~~", s);
 
@@ -5014,6 +5028,11 @@ csubstr Parser::_filter_block_scalar(substr s, BlockStyle_e style, BlockChomp_e 
     #else
     #define _c4dbgfbl(...)
     #endif
+
+    if (m_options.no_filter()) {
+        _c4dbgfbl(": indentation={} skip=[{}]~~~{}~~~", indentation, s.len, s);
+        return s;
+    }
 
     _c4dbgfbl(": indentation={} before=[{}]~~~{}~~~", indentation, s.len, s);
 

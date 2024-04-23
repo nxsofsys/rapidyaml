@@ -740,10 +740,11 @@ public:
 };
 
 %extend Parser {
-    Parser()
+    Parser(bool locations, bool no_filter)
     {
         c4::yml::ParserOptions opts;
-        opts.locations(true);
+        opts.locations(locations);
+        opts.no_filter(no_filter);
         c4::yml::Parser *p = new c4::yml::Parser(opts);
         return p;
     }

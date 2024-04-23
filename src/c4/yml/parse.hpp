@@ -29,6 +29,7 @@ private:
 
     typedef enum : uint32_t {
         LOCATIONS = (1 << 0),
+        NOFILTER = (1 << 1),
         DEFAULTS = 0,
     } Flags_e;
 
@@ -49,6 +50,17 @@ public:
         return *this;
     }
     bool locations() const { return (flags & LOCATIONS) != 0u; }
+
+    /** enable/disable source filtering */
+    ParserOptions& no_filter(bool enabled)
+    {
+        if(enabled)
+            flags |= NOFILTER;
+        else
+            flags &= ~NOFILTER;
+        return *this;
+    }
+    bool no_filter() const { return (flags & NOFILTER) != 0u; }
 
     /** @} */
 };
